@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- #
-# Run CFA in Managing Anxiety Study
+# Run Initial CFA in Managing Anxiety Study
 # Author: Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 
@@ -11,12 +11,6 @@
 # directory to parent folder
 
 # Note: Random seed must be set for each CFA analysis for reproducible results
-
-# TODO: Create functions to reduce code (e.g., for plots)
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Store working directory, check correct R version, load packages ----
@@ -45,7 +39,7 @@ getOption("max.print")
 options(max.print=10000)
 
 # ---------------------------------------------------------------------------- #
-# Import data and create CFA results path ----
+# Import data and create CFA initial results path ----
 # ---------------------------------------------------------------------------- #
 
 load("./data/ma/intermediate/dat_ma_rr.RData")
@@ -53,8 +47,8 @@ load("./data/ma/intermediate/dat_ma_rr.RData")
 load("./data/helper/dat_items.RData")
 load("./data/helper/rr_item_map.RData")
 
-cfa_path <- "./results/cfa/"
-dir.create(cfa_path)
+cfa_initial_path <- "./results/cfa/initial/"
+dir.create(cfa_initial_path)
 
 # ---------------------------------------------------------------------------- #
 # Restrict to RR items ----
@@ -76,9 +70,13 @@ lat <- list(pos_thr = dat_items$rr_pos_thr_items,
 ma_cfa_cf <- write_lavaan(latent = lat)
 cat(ma_cfa_cf)
 
-# Run using PML-AC (note: negative thresholds are OK)
+# ---------------------------------------------------------------------------- #
+# Run using PML-AC ----
+# ---------------------------------------------------------------------------- #
 
-filename <- file(paste0(cfa_path, "ma_cfa_cf_pml_ac.txt"), open = "wt")
+# Note: Negative thresholds are OK
+
+filename <- file(paste0(cfa_initial_path, "ma_cfa_cf_pml_ac.txt"), open = "wt")
 sink(file = filename, type = "output")
 sink(file = filename, type = "message")
 set.seed(1234)
@@ -108,11 +106,42 @@ ma_cfa_cf_pml_ac_p <-
            edge.label.position = .6, edge.label.margin = .01,
            edge.color="black", edge.label.color="black", 
            mar = c(1, 30, 1, 12),
-           filetype = "pdf", filename = "./results/cfa/ma_cfa_cf_pml_ac_plot")
+           filetype = "pdf", filename = "./results/cfa/initial/ma_cfa_cf_pml_ac_plot")
 
-# Run using FIML
+# ---------------------------------------------------------------------------- #
+# Run using WLSMV with pairwise deletion ----
+# ---------------------------------------------------------------------------- #
 
-filename <- file(paste0(cfa_path, "ma_cfa_cf_fiml.txt"), open = "wt")
+filename <- file(paste0(cfa_initial_path, "ma_cfa_cf_wlsmv.txt"), open = "wt")
+sink(file = filename, type = "output")
+sink(file = filename, type = "message")
+set.seed(1234)
+ma_cfa_cf_wlsmv_fit <- cfa(ma_cfa_cf, data = dat_ma_rr_only, std.lv = TRUE,
+                           ordered = TRUE, estimator = "WLSMV", missing = "pairwise")
+(ma_cfa_cf_wlsmv_summ <- summary(ma_cfa_cf_wlsmv_fit, fit.measures = TRUE, standardized = TRUE))
+(ma_cfa_cf_wlsmv_std_all <- standardizedsolution(ma_cfa_cf_wlsmv_fit))
+sink(type = "message")
+sink()
+
+ma_cfa_cf_wlsmv_p <- 
+  semPaths(ma_cfa_cf_wlsmv_fit, what = "path", whatLabels = "stand", 
+           intercepts = FALSE, residuals = FALSE, thresholds = FALSE,
+           rotation = 2, curve = 2, curvature = 2.5, cardinal = TRUE, reorder = FALSE,
+           latents = c("neg_non", "neg_thr", "pos_non", "pos_thr"),
+           manifests = c(rev(dat_items$rr_neg_non_items), rev(dat_items$rr_neg_thr_items),
+                         rev(dat_items$rr_pos_non_items), rev(dat_items$rr_pos_thr_items)),
+           sizeLat = 8, sizeMan = 20, sizeMan2 = 2,
+           nCharNodes = 0, label.scale = FALSE, label.cex = 0.7,
+           edge.label.position = .6, edge.label.margin = .01,
+           edge.color="black", edge.label.color="black", 
+           mar = c(1, 30, 1, 12),
+           filetype = "pdf", filename = "./results/cfa/initial/ma_cfa_cf_wlsmv_plot")
+
+# ---------------------------------------------------------------------------- #
+# Run using FIML ----
+# ---------------------------------------------------------------------------- #
+
+filename <- file(paste0(cfa_initial_path, "ma_cfa_cf_fiml.txt"), open = "wt")
 sink(file = filename, type = "output")
 sink(file = filename, type = "message")
 set.seed(1234)
@@ -135,13 +164,14 @@ ma_cfa_cf_fiml_p <-
            edge.label.position = .6, edge.label.margin = .01,
            edge.color="black", edge.label.color="black", 
            mar = c(1, 30, 1, 12),
-           filetype = "pdf", filename = "./results/cfa/ma_cfa_cf_fiml_plot")
+           filetype = "pdf", filename = "./results/cfa/initial/ma_cfa_cf_fiml_plot")
 
 # ---------------------------------------------------------------------------- #
 # Run CFA for bifactor model ----
 # ---------------------------------------------------------------------------- #
 
-# Define model
+# Define model (note: in addition to examples cited in preregistration, Morin et al., 
+# 2020, p. 1055, says the two general factors should be allowed to correlate)
 
 lat <- list(pos     = dat_items$rr_pos_items,
             neg     = dat_items$rr_neg_items,
@@ -155,9 +185,13 @@ cov <- list(pos = "neg")
 ma_cfa_bf <- write_lavaan(latent = lat, covariance = cov)
 cat(ma_cfa_bf)
 
-# Run using PML-AC (note: negative thresholds are OK)
+# ---------------------------------------------------------------------------- #
+# Run using PML-AC ----
+# ---------------------------------------------------------------------------- #
 
-filename <- file(paste0(cfa_path, "ma_cfa_bf_pml_ac.txt"), open = "wt")
+# Note: Negative thresholds are OK
+
+filename <- file(paste0(cfa_initial_path, "ma_cfa_bf_pml_ac.txt"), open = "wt")
 sink(file = filename, type = "output")
 sink(file = filename, type = "message")
 set.seed(1234)
@@ -188,7 +222,7 @@ ma_cfa_bf_pml_ac_p <-
            edge.label.position = .6, edge.label.margin = .01,
            edge.color="black", edge.label.color="black", 
            mar = c(1, 3, 1, 3),
-           filetype = "pdf", filename = "./results/cfa/ma_cfa_bf_pml_ac_plot")
+           filetype = "pdf", filename = "./results/cfa/initial/ma_cfa_bf_pml_ac_plot")
 
 # Connect edges to left and right sides of nodes rather than to their centers
 
@@ -207,9 +241,58 @@ ma_cfa_bf_pml_ac_p$graphAttributes$Edges$color[ma_cfa_bf_pml_ac_p$graphAttribute
 
 plot(ma_cfa_bf_pml_ac_p)
 
-# Run using FIML
+# ---------------------------------------------------------------------------- #
+# Run using WLSMV with pairwise deletion ----
+# ---------------------------------------------------------------------------- #
 
-filename <- file(paste0(cfa_path, "ma_cfa_bf_fiml.txt"), open = "wt")
+filename <- file(paste0(cfa_initial_path, "ma_cfa_bf_wlsmv.txt"), open = "wt")
+sink(file = filename, type = "output")
+sink(file = filename, type = "message")
+set.seed(1234)
+ma_cfa_bf_wlsmv_fit <- cfa(ma_cfa_bf, data = dat_ma_rr_only, std.lv = TRUE, orthogonal = TRUE,
+                           ordered = TRUE, estimator = "WLSMV", missing = "pairwise")
+(ma_cfa_bf_wlsmv_summ <- summary(ma_cfa_bf_wlsmv_fit, fit.measures = TRUE, standardized = TRUE))
+(ma_cfa_bf_wlsmv_std_all <- standardizedsolution(ma_cfa_bf_wlsmv_fit))
+sink(type = "message")
+sink()
+
+ma_cfa_bf_wlsmv_p <- 
+  semPaths(ma_cfa_bf_wlsmv_fit, what = "path", whatLabels = "stand", layout = "tree2",
+           intercepts = FALSE, residuals = FALSE, thresholds = FALSE,
+           fixedStyle = c("transparent", "blank"),
+           rotation = 2, curve = 2, curvature = 2.5, reorder = FALSE,
+           bifactor = c("neg", "pos"),
+           latents = c("neg_non", "neg_thr", "pos_non", "pos_thr", "neg", "pos"),
+           manifests = c(rev(dat_items$rr_neg_items), rev(dat_items$rr_pos_items)),
+           sizeLat = 8, sizeMan = 20, sizeMan2 = 2,
+           nCharNodes = 0, label.scale = FALSE, label.cex = 0.7,
+           edge.label.position = .6, edge.label.margin = .01,
+           edge.color="black", edge.label.color="black", 
+           mar = c(1, 3, 1, 3),
+           filetype = "pdf", filename = "./results/cfa/initial/ma_cfa_bf_wlsmv_plot")
+
+# Connect edges to left and right sides of nodes rather than to their centers
+
+ma_cfa_bf_wlsmv_p$graphAttributes$Edges$edgeConnectPoints[1:36, 2]  <- 1.5*pi
+ma_cfa_bf_wlsmv_p$graphAttributes$Edges$edgeConnectPoints[37:72, 2] <- 0.5*pi
+
+# Hide labels for fixed edges (whose edge color was made transparent above)
+
+ma_cfa_bf_wlsmv_p$graphAttributes$Edges$label.color[ma_cfa_bf_wlsmv_p$Arguments$edge.color == 
+                                                      "transparent"] <- "transparent"
+
+# Make edges black
+
+ma_cfa_bf_wlsmv_p$graphAttributes$Edges$color[ma_cfa_bf_wlsmv_p$graphAttributes$Edges$color == 
+                                                "#808080FF"] <- "black"
+
+plot(ma_cfa_bf_wlsmv_p)
+
+# ---------------------------------------------------------------------------- #
+# Run using FIML ----
+# ---------------------------------------------------------------------------- #
+
+filename <- file(paste0(cfa_initial_path, "ma_cfa_bf_fiml.txt"), open = "wt")
 sink(file = filename, type = "output")
 sink(file = filename, type = "message")
 set.seed(1234)
@@ -233,7 +316,7 @@ ma_cfa_bf_fiml_p <-
            edge.label.position = .6, edge.label.margin = .01,
            edge.color="black", edge.label.color="black", 
            mar = c(1, 3, 1, 3),
-           filetype = "pdf", filename = "./results/cfa/ma_cfa_bf_fiml_plot")
+           filetype = "pdf", filename = "./results/cfa/initial/ma_cfa_bf_fiml_plot")
 
 # Connect edges to left and right sides of nodes rather than to their centers
 
@@ -268,9 +351,13 @@ lat <- list(pos_thr = dat_items$rr_pos_thr_items,
 ma_cfa_ho <- write_lavaan(latent = lat)
 cat(ma_cfa_ho)
 
-# Run using PML-AC (note: negative thresholds are OK)
+# ---------------------------------------------------------------------------- #
+# Run using PML-AC ----
+# ---------------------------------------------------------------------------- #
 
-filename <- file(paste0(cfa_path, "ma_cfa_ho_pml_ac.txt"), open = "wt")
+# Note: Negative thresholds are OK
+
+filename <- file(paste0(cfa_initial_path, "ma_cfa_ho_pml_ac.txt"), open = "wt")
 sink(file = filename, type = "output")
 sink(file = filename, type = "message")
 set.seed(1234)
@@ -334,9 +421,69 @@ ma_cfa_ho_pml_ac_p <- NULL
 
 
 
-# Run using FIML
+# ---------------------------------------------------------------------------- #
+# Run using WLSMV with pairwise deletion ----
+# ---------------------------------------------------------------------------- #
 
-filename <- file(paste0(cfa_path, "ma_cfa_ho_fiml.txt"), open = "wt")
+filename <- file(paste0(cfa_initial_path, "ma_cfa_ho_wlsmv.txt"), open = "wt")
+sink(file = filename, type = "output")
+sink(file = filename, type = "message")
+set.seed(1234)
+ma_cfa_ho_wlsmv_fit <- cfa(ma_cfa_ho, data = dat_ma_rr_only, std.lv = TRUE,
+                           ordered = TRUE, estimator = "WLSMV", missing = "pairwise")
+(ma_cfa_ho_wlsmv_summ <- summary(ma_cfa_ho_wlsmv_fit, fit.measures = TRUE, standardized = TRUE))
+(ma_cfa_ho_wlsmv_std_all <- standardizedsolution(ma_cfa_ho_wlsmv_fit))
+sink(type = "message")
+sink()
+
+# TODO: Resolve warnings below
+
+
+
+
+
+# Warning message:
+# In lavaan::lavaan(model = ma_cfa_ho, data = dat_ma_rr_only, ordered = TRUE,  :
+#   lavaan WARNING:
+#     the optimizer (NLMINB) claimed the model converged, but not all
+#     elements of the gradient are (near) zero; the optimizer may not
+#     have found a local solution use check.gradient = FALSE to skip
+#     this check.
+# lavaan 0.6.17 did NOT end normally after 2010 iterations
+# ** WARNING ** Estimates below are most likely unreliable
+
+# Warning message:
+# In lav_object_summary(object = object, header = header, fit.measures = fit.measures,  :
+#   lavaan WARNING: fit measures not available if model did not converge
+
+# Warning message:
+# In lav_model_vcov(lavmodel = lavmodel, lavsamplestats = object@SampleStats,  :
+#   lavaan WARNING:
+#     Could not compute standard errors! The information matrix could
+#     not be inverted. This may be a symptom that the model is not
+#     identified.
+
+# Create figure without parameter estimates just to show structure
+
+ma_cfa_ho_wlsmv_p <- 
+  semPaths(ma_cfa_ho_wlsmv_fit, what = "path", whatLabels = "no", 
+           intercepts = FALSE, residuals = FALSE, thresholds = FALSE,
+           rotation = 2, curve = 2, curvature = 2.5, cardinal = TRUE, reorder = FALSE,
+           latents = c("neg_non", "neg_thr", "pos_non", "pos_thr", "neg", "pos"),
+           manifests = c(rev(dat_items$rr_neg_non_items), rev(dat_items$rr_neg_thr_items),
+                         rev(dat_items$rr_pos_non_items), rev(dat_items$rr_pos_thr_items)),
+           sizeLat = 8, sizeMan = 20, sizeMan2 = 2,
+           nCharNodes = 0, label.scale = FALSE, label.cex = 0.7,
+           edge.label.position = .6, edge.label.margin = .01,
+           edge.color="black", edge.label.color="black", 
+           mar = c(1, 6, 1, 6),
+           filetype = "pdf", filename = "./results/cfa/initial/ma_cfa_ho_wlsmv_plot")
+
+# ---------------------------------------------------------------------------- #
+# Run using FIML ----
+# ---------------------------------------------------------------------------- #
+
+filename <- file(paste0(cfa_initial_path, "ma_cfa_ho_fiml.txt"), open = "wt")
 sink(file = filename, type = "output")
 sink(file = filename, type = "message")
 set.seed(1234)
@@ -400,37 +547,49 @@ ma_cfa_ho_fiml_p <- NULL
 
 # Collect results in list
 
-res_ma_cfa <- list(ma_cfa_cf                = ma_cfa_cf,
-                   ma_cfa_cf_pml_ac_fit     = ma_cfa_cf_pml_ac_fit,
-                   ma_cfa_cf_pml_ac_summ    = ma_cfa_cf_pml_ac_summ,
-                   ma_cfa_cf_pml_ac_std_all = ma_cfa_cf_pml_ac_std_all,
-                   ma_cfa_cf_pml_ac_p       = ma_cfa_cf_pml_ac_p,
-                   ma_cfa_cf_fiml_fit       = ma_cfa_cf_fiml_fit,
-                   ma_cfa_cf_fiml_summ      = ma_cfa_cf_fiml_summ,
-                   ma_cfa_cf_fiml_std_all   = ma_cfa_cf_fiml_std_all,
-                   ma_cfa_cf_fiml_p         = ma_cfa_cf_fiml_p,
-                   ma_cfa_bf                = ma_cfa_bf,
-                   ma_cfa_bf_pml_ac_fit     = ma_cfa_bf_pml_ac_fit,
-                   ma_cfa_bf_pml_ac_summ    = ma_cfa_bf_pml_ac_summ,
-                   ma_cfa_bf_pml_ac_std_all = ma_cfa_bf_pml_ac_std_all,
-                   ma_cfa_bf_pml_ac_p       = ma_cfa_bf_pml_ac_p,
-                   ma_cfa_bf_fiml_fit       = ma_cfa_bf_fiml_fit,
-                   ma_cfa_bf_fiml_summ      = ma_cfa_bf_fiml_summ,
-                   ma_cfa_bf_fiml_std_all   = ma_cfa_bf_fiml_std_all,
-                   ma_cfa_bf_fiml_p         = ma_cfa_bf_fiml_p,
-                   ma_cfa_ho                = ma_cfa_ho,
-                   ma_cfa_ho_pml_ac_fit     = ma_cfa_ho_pml_ac_fit,
-                   ma_cfa_ho_pml_ac_summ    = ma_cfa_ho_pml_ac_summ,
-                   ma_cfa_ho_pml_ac_std_all = ma_cfa_ho_pml_ac_std_all,
-                   ma_cfa_ho_pml_ac_p       = ma_cfa_ho_pml_ac_p,
-                   ma_cfa_ho_fiml_fit       = ma_cfa_ho_fiml_fit,
-                   ma_cfa_ho_fiml_summ      = ma_cfa_ho_fiml_summ,
-                   ma_cfa_ho_fiml_std_all   = ma_cfa_ho_fiml_std_all,
-                   ma_cfa_ho_fiml_p         = ma_cfa_ho_fiml_p)
+res_ma_cfa_initial <- list(ma_cfa_cf                = ma_cfa_cf,
+                           ma_cfa_cf_pml_ac_fit     = ma_cfa_cf_pml_ac_fit,
+                           ma_cfa_cf_pml_ac_summ    = ma_cfa_cf_pml_ac_summ,
+                           ma_cfa_cf_pml_ac_std_all = ma_cfa_cf_pml_ac_std_all,
+                           ma_cfa_cf_pml_ac_p       = ma_cfa_cf_pml_ac_p,
+                           ma_cfa_cf_wlsmv_fit      = ma_cfa_cf_wlsmv_fit,
+                           ma_cfa_cf_wlsmv_summ     = ma_cfa_cf_wlsmv_summ,
+                           ma_cfa_cf_wlsmv_std_all  = ma_cfa_cf_wlsmv_std_all,
+                           ma_cfa_cf_wlsmv_p        = ma_cfa_cf_wlsmv_p,
+                           ma_cfa_cf_fiml_fit       = ma_cfa_cf_fiml_fit,
+                           ma_cfa_cf_fiml_summ      = ma_cfa_cf_fiml_summ,
+                           ma_cfa_cf_fiml_std_all   = ma_cfa_cf_fiml_std_all,
+                           ma_cfa_cf_fiml_p         = ma_cfa_cf_fiml_p,
+                           ma_cfa_bf                = ma_cfa_bf,
+                           ma_cfa_bf_pml_ac_fit     = ma_cfa_bf_pml_ac_fit,
+                           ma_cfa_bf_pml_ac_summ    = ma_cfa_bf_pml_ac_summ,
+                           ma_cfa_bf_pml_ac_std_all = ma_cfa_bf_pml_ac_std_all,
+                           ma_cfa_bf_pml_ac_p       = ma_cfa_bf_pml_ac_p,
+                           ma_cfa_bf_wlsmv_fit      = ma_cfa_bf_wlsmv_fit,
+                           ma_cfa_bf_wlsmv_summ     = ma_cfa_bf_wlsmv_summ,
+                           ma_cfa_bf_wlsmv_std_all  = ma_cfa_bf_wlsmv_std_all,
+                           ma_cfa_bf_wlsmv_p        = ma_cfa_bf_wlsmv_p,
+                           ma_cfa_bf_fiml_fit       = ma_cfa_bf_fiml_fit,
+                           ma_cfa_bf_fiml_summ      = ma_cfa_bf_fiml_summ,
+                           ma_cfa_bf_fiml_std_all   = ma_cfa_bf_fiml_std_all,
+                           ma_cfa_bf_fiml_p         = ma_cfa_bf_fiml_p,
+                           ma_cfa_ho                = ma_cfa_ho,
+                           ma_cfa_ho_pml_ac_fit     = ma_cfa_ho_pml_ac_fit,
+                           ma_cfa_ho_pml_ac_summ    = ma_cfa_ho_pml_ac_summ,
+                           ma_cfa_ho_pml_ac_std_all = ma_cfa_ho_pml_ac_std_all,
+                           ma_cfa_ho_pml_ac_p       = ma_cfa_ho_pml_ac_p,
+                           ma_cfa_ho_wlsmv_fit      = ma_cfa_ho_wlsmv_fit,
+                           ma_cfa_ho_wlsmv_summ     = ma_cfa_ho_wlsmv_summ,
+                           ma_cfa_ho_wlsmv_std_all  = ma_cfa_ho_wlsmv_std_all,
+                           ma_cfa_ho_wlsmv_p        = ma_cfa_ho_wlsmv_p,
+                           ma_cfa_ho_fiml_fit       = ma_cfa_ho_fiml_fit,
+                           ma_cfa_ho_fiml_summ      = ma_cfa_ho_fiml_summ,
+                           ma_cfa_ho_fiml_std_all   = ma_cfa_ho_fiml_std_all,
+                           ma_cfa_ho_fiml_p         = ma_cfa_ho_fiml_p)
 
 # Save results and data
 
-save(res_ma_cfa, file = paste0(cfa_path, "res_ma_cfa.RData"))
+save(res_ma_cfa_initial, file = paste0(cfa_initial_path, "res_ma_cfa_initial.RData"))
 
 dir.create("./data/ma/final")
 save(dat_ma_rr_only, file = "./data/ma/final/dat_ma_rr_only.RData")
