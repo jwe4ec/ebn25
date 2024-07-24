@@ -7,6 +7,9 @@
 # Notes ----
 # ---------------------------------------------------------------------------- #
 
+# Although the present script prepares Calm Thinking data, we decided not to 
+# analyze Calm Thinking data as part of the dissertation's scope
+
 # Before running script, restart R (CTRL+SHIFT+F10 on Windows) and set working 
 # directory to parent folder
 
@@ -38,7 +41,7 @@ groundhog_day <- version_control()
 # ---------------------------------------------------------------------------- #
 
 # Obtain file names of selected intermediate clean CSV data files and output a
-# warning if they do not contain all those relevant to present manuscript
+# warning if they do not contain all those relevant to present paper
 
 int_cln_data_dir <- paste0(wd_dir, "/data/ct/source/intermediate_clean")
 filenames <- list.files(int_cln_data_dir, pattern = "\\.csv$", full.names = FALSE)

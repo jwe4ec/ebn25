@@ -7,6 +7,9 @@
 # Notes ----
 # ---------------------------------------------------------------------------- #
 
+# Although the present script creates a demographics table for Calm Thinking, we 
+# decided not to analyze Calm Thinking data as part of the dissertation's scope
+
 # Before running script, restart R (CTRL+SHIFT+F10 on Windows) and set working 
 # directory to parent folder
 

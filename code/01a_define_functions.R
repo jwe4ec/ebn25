@@ -65,8 +65,11 @@ identify_cols <- function(df, grep_pattern) {
 # Define check_relevant_files() ----
 # ---------------------------------------------------------------------------- #
 
+# Note: Although this function defines tables relevant to Calm Thinking analyses,
+# we decided not to analyze Calm Thinking data as part of the dissertation's scope
+
 # Define function to check that selected intermediate clean CSV data files from
-# Calm Thinking study contain those relevant to present manuscript (for full set 
+# Calm Thinking study contain those relevant to present paper (for full set 
 # of intermediate clean CSV data files, see https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy)
 
 check_relevant_files <- function(filenames) {

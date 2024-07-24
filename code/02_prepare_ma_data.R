@@ -40,6 +40,9 @@
 #    Data Server using Grafana (because the "angular_training" table was too large to
 #    obtain via Grafana, Yuhan dumped it directly from the Data Server).
 
+# Although the present script mentions Calm Thinking analyses, we decided not to
+# analyze Calm Thinking data as part of the dissertation's scope
+
 # ---------------------------------------------------------------------------- #
 # Store working directory, check correct R version, load packages ----
 # ---------------------------------------------------------------------------- #
@@ -69,7 +72,7 @@ dat_main_bl_items  <- read.csv("./data/ma/source/clean_from_main_paper/R34_Cronb
 dat_main_lg_scales <- read.csv("./data/ma/source/clean_from_main_paper/R34_FinalData_New_v02.csv")
 
 # ---------------------------------------------------------------------------- #
-# # Import raw data files from Sonia and from MA study OSF project ----
+# Import raw data files from Sonia and from MA study OSF project ----
 # ---------------------------------------------------------------------------- #
 
 # Obtain file names of raw CSV data files from Sonia (see Source 2 above) and
@@ -238,12 +241,6 @@ rr_pos_non_items <- rr_item_map$items_rename[rr_item_map$valence == "pos" &
 rr_neg_items <- c(rr_neg_thr_items, rr_neg_non_items)
 rr_pos_items <- c(rr_pos_thr_items, rr_pos_non_items)
 rr_items     <- c(rr_neg_items, rr_pos_items)
-
-# TODO: Define BBSIQ item names and rename BBSIQ items
-
-
-
-
 
 # Store RR items in list
 
